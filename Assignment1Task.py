@@ -65,9 +65,17 @@ class Assignment1:
             while self.outer.sim_active:
                 # Simulate printer taking some time to print the document
                 self.printerSleep()
+                with self.outer.queue_not_empty:
+                    while len(self.outer.print_list) == 0 and self.outer.sim_active:
+                        self.outer.queue_not_empty.wait()
+
+                    if not self.outer.sim_active:
+                        break
+
                 # Grab the request at the head of the queue and print it
                 # Write code here
                 self.printDox(self.printerID)
+                self.outer.queue_not_full.notify()
 
         def printerSleep(self):
             sleepSeconds = random.randint(1, self.outer.MAX_PRINTER_SLEEP)
@@ -89,9 +97,16 @@ class Assignment1:
             while self.outer.sim_active:
                 # Machine sleeps for a random amount of time
                 self.machineSleep()
+                with self.outer.queue_not_full:
+                    while len(self.outer.print_list) >= self.outer.QUEUE_MAX_SIZE and self.outer.sim_active:
+                        self.outer.queue_not_full.wait()
+
+                    if not self.outer.sim_active:
+                        break
                 # Machine wakes up and sends a print request
                 # Write code here
                 self.printRequest(self.machineID)
+                self.outer.queue_not_empty.notify()
 
         def machineSleep(self):
             sleepSeconds = random.randint(1, self.outer.MAX_MACHINE_SLEEP)
