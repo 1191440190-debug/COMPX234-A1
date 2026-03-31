@@ -12,14 +12,17 @@ class Assignment1:
     SIMULATION_TIME = 30     # Total simulation time in seconds
     MAX_PRINTER_SLEEP = 3    # Maximum sleep time for printers
     MAX_MACHINE_SLEEP = 5    # Maximum sleep time for machines
-
+    QUEUE_MAX_SIZE = 5       # Incremental Queue Length
     # Initialise simulation variables
     def __init__(self):
         self.sim_active = True
         self.print_list = printList()  # Create an empty list of print requests
         self.mThreads = []             # list for machine threads
         self.pThreads = []             # list for printer threads
-
+        # Add synchronization locks and condition variables
+        self.lock = threading.Lock()
+        self.queue_not_full = threading.Condition(self.lock)
+        self.queue_not_empty = threading.Condition(self.lock)
     def startSimulation(self):
         # Create Machine and Printer threads
         # writ code here
@@ -39,6 +42,10 @@ class Assignment1:
 
         # Finish simulation
         self.sim_active = False
+        # Weak up all waiting threeads
+        with self.lock:
+            self.queue_not_full.notify_all()
+            self.queue_not_empty.notify_all()
 
         # Wait until all printer threads finish by joining them
         # Write code here
